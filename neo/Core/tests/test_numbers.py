@@ -251,6 +251,37 @@ class BigIntegerTestCase(TestCase):
         self.assertEqual(b3, 99975899)
         self.assertEqual(b4, b3)
 
+    def test_big_integer_div_rounding(self):
+        b1 = BigInteger(1)
+        b2 = BigInteger(2)
+        self.assertEqual(0, b1 / b2)  # 0.5 -> 0
+
+        b1 = BigInteger(2)
+        b2 = BigInteger(3)
+        self.assertEqual(0, b1 / b2)  # 0.66 -> 0
+
+        b1 = BigInteger(5)
+        b2 = BigInteger(4)
+        self.assertEqual(1, b1 / b2)  # 1.25 -> 1
+
+        b1 = BigInteger(5)
+        b2 = BigInteger(3)
+        self.assertEqual(1, b1 / b2)  # 1.66 -> 1
+
+        b1 = BigInteger(-1)
+        b2 = BigInteger(3)
+        self.assertEqual(0, b1 / b2)  # -0.33 -> 0
+
+        b1 = BigInteger(-5)
+        b2 = BigInteger(3)
+        self.assertEqual(-1, b1 / b2)  # -1.66 -> -1
+
+    def test_big_integer_div_block1473972(self):
+        b1 = BigInteger(-11001000000)
+        b2 = BigInteger(86400)
+        result = b1 / b2
+        self.assertEqual(-127326, result)
+
     def test_big_integer_float(self):
         b1 = BigInteger(5505.001)
         b2 = BigInteger(55055.999)
@@ -316,6 +347,22 @@ class BigIntegerTestCase(TestCase):
 
         c2_unsigned = BigInteger.FromBytes(c1_bytes, signed=False)
         self.assertEqual(c2_unsigned.Sign, 1)
+
+    def test_big_integer_modulo(self):
+        b1 = BigInteger(860593)
+        b2 = BigInteger(-201)
+        self.assertEqual(112, b1 % b2)
+
+        b1 = BigInteger(20195283520469175757)
+        b2 = BigInteger(1048576)
+        self.assertEqual(888269, b1 % b2)
+
+        b1 = BigInteger(-18224909727634776050312394179610579601844989529623334093909233530432892596607)
+        b2 = BigInteger(14954691977398614017)
+        self.assertEqual(-3100049211437790421, b1 % b2)
+
+        b3 = BigInteger.from_bytes(bytearray(b'+K\x05\xbe\xaai\xfa\xd4'), 'little', signed=True)
+        self.assertEqual(b3, b1 % b2)
 
     def test_dunder_methods(self):
         b1 = BigInteger(1)

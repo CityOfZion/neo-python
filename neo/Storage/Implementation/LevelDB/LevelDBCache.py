@@ -34,7 +34,6 @@ class LevelDBCache(DataCache):
         except binascii.Error:
             intermediate_prefix = bytearray(key_prefix)
 
-        intermediate_prefix.reverse()
         key_prefix = self.prefix + intermediate_prefix
         res = {}
         with self.db.openIter(DBProperties(key_prefix, include_value=True)) as it:
@@ -42,7 +41,7 @@ class LevelDBCache(DataCache):
                 # we want the storage item, not the raw bytes
                 item = self.ClassRef.DeserializeFromDB(binascii.unhexlify(val))
                 # also here we need to skip the 1 byte storage prefix
-                res_key = key[21:]
+                res_key = key[1:]
                 res[res_key] = item
 
         # yielding outside of iterator to make sure the db iterator is closed

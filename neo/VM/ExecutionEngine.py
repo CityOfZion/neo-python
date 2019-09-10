@@ -99,13 +99,25 @@ class ExecutionEngine:
     def GetItemCount(self, items_list):  # list of StackItems
         count = 0
         items = deque(items_list)
+        counted = []
         while items:
             stackitem = items.pop()
+
             if stackitem.IsTypeMap:
+                if stackitem in counted:
+                    continue
+
+                counted.append(stackitem)
+
                 items.extend(stackitem.Values)
                 continue
 
             if stackitem.IsTypeArray:
+                if stackitem in counted:
+                    continue
+
+                counted.append(stackitem)
+
                 items.extend(stackitem.GetArray())
                 continue
             count += 1
@@ -311,9 +323,7 @@ class ExecutionEngine:
                 if len(instruction.Operand) > 252:
                     return False
 
-                call = instruction.Operand.decode('ascii')
-                self.write_log(call)
-                if not self._Service.Invoke(call, self):
+                if not self._Service.Invoke(instruction.Operand, self):
                     return self.VM_FAULT_and_report(VMFault.SYSCALL_ERROR, instruction.Operand)
 
                 if not self.CheckStackSize(False, int_MaxValue):
@@ -446,7 +456,10 @@ class ExecutionEngine:
 
                 x = estack.Pop().GetByteArray()
 
-                estack.PushT(x[:count])
+                if count >= len(x):
+                    estack.PushT(x)
+                else:
+                    estack.PushT(x[:count])
                 self.CheckStackSize(True, -1)
 
             elif opcode == RIGHT:
@@ -459,7 +472,11 @@ class ExecutionEngine:
                 if count > len(x):
                     return self.VM_FAULT_and_report(VMFault.RIGHT_UNKNOWN)
 
-                estack.PushT(x[-count:])
+                if count == len(x):
+                    estack.PushT(x)
+                else:
+                    offset = len(x) - count
+                    estack.PushT(x[offset:offset + count])
                 self.CheckStackSize(True, -1)
 
             elif opcode == SIZE:
@@ -539,7 +556,7 @@ class ExecutionEngine:
 
             elif opcode == NOT:
 
-                x = estack.Pop().GetBigInteger()
+                x = estack.Pop().GetBoolean()
                 estack.PushT(not x)
                 self.CheckStackSize(False, 0)
 
@@ -1237,6 +1254,14 @@ class ExecutionEngine:
                 instruction = self.CurrentContext.CurrentInstruction
 
                 if self._is_write_log:
+                    if instruction.InstructionName == "SYSCALL":
+                        if len(instruction.Operand) > 4:
+                            call = instruction.Operand.decode('ascii')
+                            self.write_log("{} {} {} {}".format(self.ops_processed, instruction.InstructionName, call, self.CurrentContext.InstructionPointer))
+                        else:
+                            self.write_log("{} {} {} {}".format(self.ops_processed, instruction.InstructionName, instruction.TokenU32,
+                                                                self.CurrentContext.InstructionPointer))
+                else:
                     self.write_log("{} {} {}".format(self.ops_processed, instruction.InstructionName, self.CurrentContext.InstructionPointer))
 
                 if not self.PreExecuteInstruction():

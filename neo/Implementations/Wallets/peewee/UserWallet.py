@@ -538,10 +538,12 @@ class UserWallet(Wallet):
             addr_str = address + " (watch only)" if data['watchonly'] else address
             print(f"Address    : {addr_str}")
             if verbose:
-                print(f"Script hash: {data['script_hash']}")
-                human_readable_scripthash = binascii.hexlify(data['script_hash']).decode()
-                print(f"{human_readable_scripthash: >53}")
+                scripthash_le = binascii.hexlify(data['script_hash']).decode()
+                scripthash_be = UInt160(data=data['script_hash']).To0xString()
                 print(f"Public key : {data['public_key']}")
+                print(f"Script hash: {data['script_hash']}")
+                print(f"               little endian: {scripthash_le}")
+                print(f"                  big endian: {scripthash_be}")
             has_balances = False
             for asset_name, value in data['assets'].items():
                 if value > 0:

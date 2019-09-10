@@ -1,4 +1,4 @@
-from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction, TXFeeError
+from neo.Core.TX.Transaction import TransactionOutput, ContractTransaction
 from neo.Core.TX.TransactionAttribute import TransactionAttribute, TransactionAttributeUsage
 from neo.SmartContract.ContractParameterContext import ContractParametersContext
 from neo.Prompt.Utils import get_arg, get_from_addr, get_asset_id, lookup_addr_str, get_tx_attr_from_args, \
@@ -7,6 +7,7 @@ from neo.Prompt.Commands.Tokens import do_token_transfer, amount_from_string
 from neo.Prompt.Commands.Invoke import gather_signatures
 from neo.Wallets.NEP5Token import NEP5Token
 from neo.Core.Fixed8 import Fixed8
+from neo.Core.Utils import validate_simple_policy
 import json
 import traceback
 from neo.Prompt.PromptData import PromptData
@@ -254,9 +255,6 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
               "If you are trying to sent multiple transactions in 1 block, then make sure you have enough 'vouts'\n."
               "Use `wallet unspent` and `wallet address split`, or wait until the first transaction is processed before sending another.")
         return
-    except TXFeeError as e:
-        print(e)
-        return
 
     if tx is None:
         logger.debug("insufficient funds")
@@ -322,8 +320,15 @@ def process_transaction(wallet, contract_tx, scripthash_from=None, scripthash_ch
         if context.Completed:
 
             tx.scripts = context.GetScripts()
+
+            passed, reason = validate_simple_policy(tx)
+            if not passed:
+                print(reason)
+                return
+
             nodemgr = NodeManager()
             relayed = nodemgr.relay(tx)
+
             if relayed:
                 wallet.SaveTransaction(tx)
 

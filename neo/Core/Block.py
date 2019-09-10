@@ -191,7 +191,12 @@ class Block(BlockBase, InventoryMixin):
             return False
         if other is self:
             return True
+        if type(other) is not Block:
+            return False
         return self.Hash == other.Hash
+
+    def __eq__(self, other):
+        return self.Equals(other)
 
     @staticmethod
     def FromTrimmedData(byts):

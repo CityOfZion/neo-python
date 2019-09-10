@@ -639,6 +639,9 @@ class StateMachine(StateReader):
         if len(param_list) > 252:
             return False
         return_type = int(engine.CurrentContext.EvaluationStack.Pop().GetBigInteger())
+        if return_type < 0 or return_type > 0xff:
+            raise ValueError("Invalid return type data popped from stack")
+
         contract_properties = int(engine.CurrentContext.EvaluationStack.Pop().GetBigInteger())
 
         if len(engine.CurrentContext.EvaluationStack.Peek().GetByteArray()) > 252:
@@ -742,12 +745,13 @@ class StateMachine(StateReader):
 
             self.Snapshot.Contracts.Add(hash.ToBytes(), contract)
 
-            self._contracts_created[hash.ToBytes()] = UInt160(data=engine.CurrentContext.ScriptHash())
+            cur_hash = UInt160(data=engine.CurrentContext.ScriptHash())
+            self._contracts_created[hash.ToBytes()] = cur_hash
 
             if contract.HasStorage:
                 to_add = []
-                for key, item in self.Snapshot.Storages.Find(engine.CurrentContext.ScriptHash()):
-                    key = StorageKey(script_hash=hash, key=key)
+                for key, item in self.Snapshot.Storages.Find(cur_hash.ToArray()):
+                    key = StorageKey(script_hash=hash, key=key[20:])
                     to_add.append((key.ToArray(), item))
 
                 for k, v in to_add:

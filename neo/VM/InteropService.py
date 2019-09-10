@@ -1,3 +1,4 @@
+import hashlib
 import binascii
 from neo.VM.Mixins import EquatableMixin
 from neo.Core.BigInteger import BigInteger
@@ -96,7 +97,7 @@ class StackItem(EquatableMixin):
         if stype == StackItemType.ByteArray:
             return ByteArray(reader.ReadVarBytes())
         elif stype == StackItemType.Boolean:
-            return Boolean(ord(reader.ReadByte()))
+            return Boolean(bool(ord(reader.ReadByte())))
         elif stype == StackItemType.Integer:
             return Integer(BigInteger.FromBytes(reader.ReadVarBytes(), signed=True))
         elif stype == StackItemType.Array:
@@ -187,7 +188,11 @@ class Array(StackItem, CollectionMixin):
         return self._array.index(item)
 
     def Remove(self, item):
-        return self._array.remove(item)
+        try:
+            self._array.remove(item)
+            return True
+        except ValueError:
+            return False
 
     def RemoveAt(self, index):
         return self._array.pop(index)
@@ -213,7 +218,7 @@ class Array(StackItem, CollectionMixin):
         raise Exception("Not Supported")
 
     def GetBoolean(self):
-        return len(self._array) > 0
+        return True
 
     def GetByteArray(self):
         logger.debug("Trying to get bytearray integer %s " % self)
@@ -236,6 +241,12 @@ class Array(StackItem, CollectionMixin):
 
     def __str__(self):
         return "Array: %s" % [str(item) for item in self._array]
+
+    def __eq__(self, other):
+        return self.Equals(other)
+
+    def __hash__(self):
+        return id(self)
 
 
 class Boolean(StackItem):
@@ -279,6 +290,12 @@ class Boolean(StackItem):
     def __str__(self):
         return str(self._value)
 
+    def __eq__(self, other):
+        return self.Equals(other)
+
+    def __hash__(self):
+        return id(self)
+
 
 class ByteArray(StackItem):
 
@@ -295,7 +312,10 @@ class ByteArray(StackItem):
         if other is self:
             return True
 
-        return self._value == other._value
+        try:
+            return self._value == other.GetByteArray()
+        except Exception:
+            return False
 
     def GetBigInteger(self):
         try:
@@ -418,6 +438,12 @@ class InteropInterface(StackItem):
             pass
         return "IOp Interface Item"
 
+    def __eq__(self, other):
+        return self.Equals(other)
+
+    def __hash__(self):
+        return id(self)
+
 
 class Struct(Array):
 
@@ -461,6 +487,9 @@ class Struct(Array):
     def __str__(self):
         return "Struct: %s " % self._array
 
+    def __hash__(self):
+        return id(self)
+
 
 class Map(StackItem, CollectionMixin):
 
@@ -496,8 +525,11 @@ class Map(StackItem, CollectionMixin):
         self._dict[key] = value
 
     def Remove(self, key):
-        del self._dict[key]
-        return True
+        try:
+            del self._dict[key]
+            return True
+        except KeyError:
+            return False
 
     def Clear(self):
         self._dict = {}
@@ -529,6 +561,9 @@ class Map(StackItem, CollectionMixin):
 
     def __eq__(self, other):
         return self.Equals(other)
+
+    def __hash__(self):
+        return id(self)
 
     def __str__(self):
         return self.GetString()
@@ -573,13 +608,18 @@ class InteropService:
         self.Register("System.ExecutionEngine.GetEntryScriptHash", self.GetEntryScriptHash)
 
     def Register(self, method, func):
-        self._dictionary[method] = func
+        hashed_method = int.from_bytes(hashlib.sha256(method.encode()).digest()[:4], 'little', signed=False)
+        self._dictionary[hashed_method] = func
 
     def Invoke(self, method, engine):
-        if method not in self._dictionary.keys():
+        if len(method) == 4:
+            hashed_method = int.from_bytes(method, 'little', signed=False)
+        else:
+            hashed_method = int.from_bytes(hashlib.sha256(method).digest()[:4], 'little', signed=False)
+        if hashed_method not in self._dictionary.keys():
             logger.debug("method %s not found" % method)
             return False
-        func = self._dictionary[method]
+        func = self._dictionary[hashed_method]
         return func(engine)
 
     @staticmethod

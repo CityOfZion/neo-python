@@ -13,7 +13,7 @@ from decimal import Decimal
 from Crypto import Random
 from Crypto.Cipher import AES
 from threading import RLock
-from neo.Core.TX.Transaction import TransactionType, TransactionOutput, TXFeeError
+from neo.Core.TX.Transaction import TransactionType, TransactionOutput
 from neo.Core.State.CoinState import CoinState
 from neo.Core.Blockchain import Blockchain
 from neo.Core.CoinReference import CoinReference
@@ -986,8 +986,7 @@ class Wallet:
                         use_standard=False,
                         watch_only_val=0,
                         exclude_vin=None,
-                        use_vins_for_asset=None,
-                        skip_fee_calc=False):
+                        use_vins_for_asset=None):
         """
         This method is used to to calculate the necessary TransactionInputs (CoinReferences) and TransactionOutputs to
         be used when creating a transaction that involves an exchange of system assets, ( NEO, Gas, etc ).
@@ -1001,7 +1000,6 @@ class Wallet:
             watch_only_val (int): 0 or CoinState.WATCH_ONLY, if present only choose coins that are in a WatchOnly address.
             exclude_vin (list): A list of CoinReferences to NOT use in the making of this tx.
             use_vins_for_asset (list): A list of CoinReferences to use.
-            skip_fee_calc (bool): If true, the network fee calculation and verification will be skipped.
 
         Returns:
             tx: (Transaction) Returns the transaction with updated inputs and outputs.
@@ -1092,15 +1090,6 @@ class Wallet:
 
         tx.inputs = inputs
         tx.outputs = tx.outputs + new_outputs
-
-        # calculate and verify the required network fee for the tx
-        if tx.Size() > settings.MAX_FREE_TX_SIZE and not skip_fee_calc:
-            req_fee = Fixed8.FromDecimal(settings.FEE_PER_EXTRA_BYTE * (tx.Size() - settings.MAX_FREE_TX_SIZE))
-            if req_fee < settings.LOW_PRIORITY_THRESHOLD:
-                req_fee = settings.LOW_PRIORITY_THRESHOLD
-            if fee < req_fee:
-                raise TXFeeError(
-                    f'Transaction cancelled. The tx size ({tx.Size()}) exceeds the max free tx size ({settings.MAX_FREE_TX_SIZE}).\nA network fee of {req_fee.ToString()} GAS is required.')
 
         return tx
 

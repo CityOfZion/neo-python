@@ -781,8 +781,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_post_rpc_req("sendtoaddress", params=['gas', address, 1])
-        res = json.loads(self.do_test_post("/", json=req))
+        with patch('neo.Network.nodemanager.NodeManager.relay', return_value=self.async_return(True)):
+            req = self._gen_post_rpc_req("sendtoaddress", params=['gas', address, 1])
+            res = json.loads(self.do_test_post("/", json=req))
 
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
@@ -803,8 +804,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
         )
         address = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
 
-        req = self._gen_post_rpc_req("sendtoaddress", params=['neo', address, 1, 0.005])
-        res = json.loads(self.do_test_post("/", json=req))
+        with patch('neo.Network.nodemanager.NodeManager.relay', return_value=self.async_return(True)):
+            req = self._gen_post_rpc_req("sendtoaddress", params=['neo', address, 1, 0.005])
+            res = json.loads(self.do_test_post("/", json=req))
 
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
@@ -989,7 +991,6 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
         os.remove(test_wallet_path)
 
     def test_send_from_simple(self):
-        self.api_server.nodemgr.reset_for_test()
         test_wallet_path = shutil.copyfile(
             WalletFixtureTestCase.wallet_1_path(),
             WalletFixtureTestCase.wallet_1_dest()
@@ -1000,8 +1001,11 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
         )
         address_to = 'AXjaFSP23Jkbe6Pk9pPGT6NBDs1HVdqaXK'
         address_from = 'AJQ6FoaSXDFzA6wLnyZ1nFN7SGSN2oNTc3'
-        req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
-        res = json.loads(self.do_test_post("/", json=req))
+
+        with patch('neo.Network.nodemanager.NodeManager.relay', return_value=self.async_return(True)):
+            req = self._gen_post_rpc_req("sendfrom", params=['neo', address_from, address_to, 1])
+            res = json.loads(self.do_test_post("/", json=req))
+
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
         self.assertIn('vin', res.get('result', {}).keys())
@@ -1012,7 +1016,6 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
         os.remove(WalletFixtureTestCase.wallet_1_dest())
 
     def test_send_from_complex(self):
-        self.api_server.nodemgr.reset_for_test()
         test_wallet_path = shutil.copyfile(
             WalletFixtureTestCase.wallet_1_path(),
             WalletFixtureTestCase.wallet_1_dest()
@@ -1031,8 +1034,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
                                        address_from_account_state['balances']))
         address_from_gas_bal = address_from_gas['value']
 
-        req = self._gen_post_rpc_req("sendfrom", params=['gas', address_from, address_to, amount, net_fee, change_addr])
-        res = json.loads(self.do_test_post("/", json=req))
+        with patch('neo.Network.nodemanager.NodeManager.relay', return_value=self.async_return(True)):
+            req = self._gen_post_rpc_req("sendfrom", params=['gas', address_from, address_to, amount, net_fee, change_addr])
+            res = json.loads(self.do_test_post("/", json=req))
 
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
@@ -1252,8 +1256,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_post_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
-        res = json.loads(self.do_test_post("/", json=req))
+        with patch('neo.Network.nodemanager.NodeManager.relay', return_value=self.async_return(True)):
+            req = self._gen_post_rpc_req("sendmany", params=[output, 1, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
+            res = json.loads(self.do_test_post("/", json=req))
 
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
@@ -1280,8 +1285,9 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
             test_wallet_path,
             to_aes_key(WalletFixtureTestCase.wallet_1_pass())
         )
-        req = self._gen_get_rpc_req("sendmany", params=[output, 0.005, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
-        res = json.loads(self.do_test_get(req))
+        with patch('neo.Network.nodemanager.NodeManager.relay', return_value=self.async_return(True)):
+            req = self._gen_get_rpc_req("sendmany", params=[output, 0.005, "APRgMZHZubii29UXF9uFa6sohrsYupNAvx"])
+            res = json.loads(self.do_test_get(req))
 
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
@@ -1315,8 +1321,10 @@ class JsonRpcApiTestCase(BlockchainFixtureTestCase, AioHTTPTestCase):
                   {"asset": 'neo',
                    "value": 1,
                    "address": address_to}]
-        req = self._gen_post_rpc_req("sendmany", params=[output])
-        res = json.loads(self.do_test_post("/", json=req))
+        with patch('neo.Network.nodemanager.NodeManager.relay', return_value=self.async_return(True)):
+            req = self._gen_post_rpc_req("sendmany", params=[output])
+            res = json.loads(self.do_test_post("/", json=req))
+
         self.assertEqual(res.get('jsonrpc', None), '2.0')
         self.assertIn('txid', res.get('result', {}).keys())
         self.assertIn('vin', res.get('result', {}).keys())

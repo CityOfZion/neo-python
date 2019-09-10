@@ -78,7 +78,7 @@ def MonkeyPatchPersist(self, block, snapshot=None):
                         sc.Items.append(SpentCoinItem(input.PrevIndex, block.Index))
 
                     output = prevTx.outputs[input.PrevIndex]
-                    acct = snapshot.Accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes, AccountState(output.ScriptHash))
+                    acct = snapshot.Accounts.GetAndChange(prevTx.outputs[input.PrevIndex].AddressBytes, lambda: AccountState(output.ScriptHash))
                     assetid = prevTx.outputs[input.PrevIndex].AssetId
                     acct.SubtractFromBalance(assetid, prevTx.outputs[input.PrevIndex].Value)
 

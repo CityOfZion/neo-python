@@ -53,7 +53,12 @@ class Header(BlockBase):
             return False
         if other is self:
             return True
+        if type(other) is not Header:
+            return False
         return self.Hash == other.Hash
+
+    def __eq__(self, other):
+        return self.Equals(other)
 
     @staticmethod
     def FromTrimmedData(data, index):

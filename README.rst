@@ -1,4 +1,4 @@
-.. image:: http://res.cloudinary.com/vidsy/image/upload/v1503160820/CoZ_Icon_DARKBLUE_200x178px_oq0gxm.png
+.. image:: https://raw.githubusercontent.com/CityOfZion/visual-identity/develop/_CoZ%20Branding/_Logo/_Logo%20icon/_PNG%20200x178px/CoZ_Icon_DARKBLUE_200x178px.png
     :alt: CoZ logo
 
 neo-python
@@ -272,7 +272,9 @@ np-bootstrap Usage
       -c CONFIG, --config CONFIG
                             Use a specific config file
       -n, --notifications   Bootstrap notification database
-      -s, --skipconfirm     Bypass warning about overwritting data in Chains/SC234
+      -s, --skipconfirm     Bypass warning about overwriting data in Chains
+      -k, --keep-bootstrap-file
+                            Keep the downloaded bootstrap file
       --datadir DATADIR     Absolute path to use for database directories
 
 Bootrapping Testnet

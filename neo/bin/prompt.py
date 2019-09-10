@@ -31,7 +31,6 @@ from neo.Network.nodemanager import NodeManager
 
 import neo.Storage.Implementation.DBFactory as DBFactory
 
-
 logger = log_manager.getLogger()
 
 from prompt_toolkit.eventloop import use_asyncio_event_loop
@@ -265,10 +264,10 @@ def main():
                         help="Absolute path to use for database directories")
 
     # peers
-    parser.add_argument("--minpeers", action="store", type=int,
+    parser.add_argument("--minpeers", action="store", type=int, choices=range(1, 10 + 1), metavar="[1-10]",
                         help="Min peers to use for P2P Joining")
 
-    parser.add_argument("--maxpeers", action="store", type=int, default=5,
+    parser.add_argument("--maxpeers", action="store", type=int, default=5, choices=range(1, 10 + 1), metavar="[1-10]",
                         help="Max peers to use for P2P Joining")
 
     # Show the neo-python version

@@ -520,9 +520,12 @@ class Transaction(InventoryMixin):
         self.outputs = reader.ReadSerializableArray('neo.Core.TX.Transaction.TransactionOutput')
 
     def Equals(self, other):
-        if other is None or other is not self:
+        if other is None or other is not self or not isinstance(other, Transaction):
             return False
         return self.Hash == other.Hash
+
+    def __eq__(self, other):
+        return self.Equals(other)
 
     def ToArray(self):
         """
@@ -688,16 +691,20 @@ class Transaction(InventoryMixin):
     #                    return False
     #
 
-    def GetScriptHashesForVerifying(self, snapshot):
+    def GetScriptHashesForVerifying(self, snapshot=None):
         """
         Get a list of script hashes for verifying transactions.
 
         Raises:
             Exception: if there are no valid assets in the transaction.
+            ValueError: if a snapshot object is not provided for regular transactions. RawTx is exempt from this check.
 
         Returns:
             list: of UInt160 type script hashes.
         """
+        if snapshot is None and not self.raw_tx:
+            raise ValueError("Snapshot cannot be None for regular transaction types")
+
         if not self.References and len(self.Attributes) < 1:
             return []
 
@@ -769,8 +776,3 @@ class ContractTransaction(Transaction):
         """
         super(ContractTransaction, self).__init__(*args, **kwargs)
         self.Type = TransactionType.ContractTransaction
-
-
-class TXFeeError(Exception):
-    """Provide user-friendly feedback for transaction fee errors."""
-    pass

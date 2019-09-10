@@ -3,11 +3,9 @@
 from neo.Core.Blockchain import Blockchain
 from neo.Core.Block import Block
 from neo.Storage.Implementation.DBFactory import getBlockchainDB
-from neo.Storage.Common.DBPrefix import DBPrefix
 from neo.Settings import settings
 from neo.Core.IO.BinaryReader import BinaryReader
-from neo.Core.IO.BinaryWriter import BinaryWriter
-from neo.IO.MemoryStream import StreamManager, MemoryStream
+from neo.IO.MemoryStream import MemoryStream
 import argparse
 import os
 import shutil
@@ -108,7 +106,6 @@ async def _main():
             print("Starting import at %s " % start_block)
 
             if args.totalblocks:
-                # total_blocks = start_block + args.totalblocks - 1
                 total_blocks = args.totalblocks
 
             for _ in trange(start_block, desc='Skipping blocks', unit='Block'):
@@ -184,9 +181,6 @@ async def _main():
             # get block
             block.DeserializeForImport(reader)
             header_hash_list.append(block.Hash.ToBytes())
-
-            # if block.Index > 942371:
-            #     break
 
             # add
             if block.Index >= start_block:

@@ -1,3 +1,6 @@
+from decimal import Decimal, localcontext
+
+
 class BigInteger(int):
     @property
     def Sign(self):
@@ -46,7 +49,12 @@ class BigInteger(int):
         return BigInteger(super(BigInteger, self).__add__(*args, **kwargs))
 
     def __mod__(self, *args, **kwargs):  # real signature unknown
-        return BigInteger(super(BigInteger, self).__mod__(*args, **kwargs))
+        with localcontext() as ctx:
+            ctx.prec = 100
+            d1 = Decimal(self)
+            d2 = Decimal(args[0])
+            res = int(d1 % d2)
+        return BigInteger(res)
 
     def __mul__(self, *args, **kwargs):  # real signature unknown
         return BigInteger(super(BigInteger, self).__mul__(*args, **kwargs))
@@ -64,7 +72,10 @@ class BigInteger(int):
         return BigInteger(super(BigInteger, self).__floordiv__(*args, **kwargs))
 
     def __truediv__(self, *args, **kwargs):  # real signature unknown
-        return BigInteger(super(BigInteger, self).__floordiv__(*args, **kwargs))
+        if self < 0:
+            return BigInteger(super(BigInteger, self).__truediv__(*args, **kwargs))
+        else:
+            return BigInteger(super(BigInteger, self).__floordiv__(*args, **kwargs))
 
     def __rshift__(self, *args, **kwargs):
         shift = args[0]

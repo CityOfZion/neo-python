@@ -24,18 +24,19 @@
 #
 # Once you are inside the container, you can start neo-python with `np-prompt` (using -p to connect to a private net).
 # To update neo-python, just run `git pull` and `pip install -e .`
-FROM ubuntu:17.10
+FROM ubuntu:18.04
 
 # Branch can be overwritten with --build-arg, eg: `--build-arg branch=development`
 ARG branch=master
 
 # Install dependencies
+RUN apt-get update && apt-get install -y software-properties-common && add-apt-repository ppa:deadsnakes/ppa
 RUN apt-get update && apt-get install -y \
     wget \
     git-core \
-    python3.6 \
-    python3.6-dev \
-    python3.6-venv \
+    python3.7 \
+    python3.7-dev \
+    python3.7-venv \
     python3-pip \
     libleveldb-dev \
     libssl-dev \
@@ -51,7 +52,9 @@ WORKDIR neo-python
 RUN git checkout $branch
 
 # Install the dependencies
-RUN pip3 install -e .
+RUN wget https://bootstrap.pypa.io/get-pip.py
+RUN python3.7m get-pip.py
+RUN pip3.7 install -e .
 
 # Download the privnet wallet, to have it handy for easy experimenting
 RUN wget https://s3.amazonaws.com/neo-experiments/neo-privnet.wallet

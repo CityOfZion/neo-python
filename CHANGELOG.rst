@@ -3,8 +3,16 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.8.5-dev] in progress
+[0.9.1-dev] In progress
 -----------------------
+- Reformat wallet verbose output to include big-endian scripthash
+- Fix network syncing against neo-cli ``2.10.3`` clients
+- Update Python requirements
+- Fix Docker configuration pip issue
+
+
+[0.9.0] 2019-08-21
+------------------
 - Allow override of test invocation return type
 - Add current wallet height to bottom toolbar
 - Change class attributes of ``Transaction`` into instance attributes and fix constructor
@@ -49,6 +57,24 @@ All notable changes to this project are documented in this file.
 - Fix clearing storage manipulations on failed invocation transaction execution
 - Fix param parsing input from command line
 - Port caching layer from neo-cli
+- Fix ``Contract_Migrate`` syscall
+- Fix ``BigInteger`` modulo for negative divisor values
+- Fix ``GetBoolean()`` for ``Array`` stackitem
+- Fix ``BigInteger`` division for negative dividend values
+- Add functionality for RawTransaction class
+- Fix ``GetPriceForSysCall()`` for a ``Neo.Contract.Create`` syscall with invalid contract properties
+- Updated ``np-bootstrap`` to delete the downloaded bootstrap file by default `#986 <https://github.com/CityOfZion/neo-python/pull/986>`_
+- Fix ``Remove()`` behaviour for ``Map`` and ``Array`` types to be inline with C#
+- Add support for compressed syscalls
+- Validate SimplePolicy for signed transactions
+- Fix NEP-5 token send operation in ``np-prompt`` to properly handle token ``decimals``/scale `#990 <https://github.com/CityOfZion/neo-python/pull/990>`_
+- Fix ``NOT`` VM instruction
+- Fix StackItem deserialization for ``Boolean`` VM type
+- Update ``CheckDynamicInvoke`` to operate on snapshots
+- Fix ``Contract.Destroy`` not always deleting storage
+- Fix ``Equals()`` of ``ByteArray``
+- Fix max recursion depth exception when counting certain VM StackItems that point to themselves
+- Fix ``RIGHT`` opcode for 0 count edge case
 
 
 [0.8.4] 2019-02-14
