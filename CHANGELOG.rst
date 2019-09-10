@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - Fix network syncing against neo-cli ``2.10.3`` clients
 - Update Python requirements
 - Fix Docker configuration pip issue
+- Fix param parsing input from command line
 
 
 [0.9.0] 2019-08-21
@@ -55,7 +56,6 @@ All notable changes to this project are documented in this file.
 - Add workaround for ``Neo.Contract.Create`` SYSCALl accepting invalid ``ContractParameterType``'s until neo-cli fixes it to keep same state
 - Fix parsing nested lists `#954 <https://github.com/CityOfZion/neo-python/issues/954>`_
 - Fix clearing storage manipulations on failed invocation transaction execution
-- Fix param parsing input from command line
 - Port caching layer from neo-cli
 - Fix ``Contract_Migrate`` syscall
 - Fix ``BigInteger`` modulo for negative divisor values
