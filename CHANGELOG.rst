@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - Fix network syncing against neo-cli ``2.10.3`` clients
 - Update Python requirements
 - Fix Docker configuration pip issue
+- Fix parsing spaces
 
 
 [0.9.0] 2019-08-21
@@ -74,7 +75,6 @@ All notable changes to this project are documented in this file.
 - Fix ``Equals()`` of ``ByteArray``
 - Fix max recursion depth exception when counting certain VM StackItems that point to themselves
 - Fix ``RIGHT`` opcode for 0 count edge case
-- Fix parsing spaces
 
 
 [0.8.4] 2019-02-14
