@@ -9,6 +9,7 @@ All notable changes to this project are documented in this file.
 - Fix network syncing against neo-cli ``2.10.3`` clients
 - Update Python requirements
 - Fix Docker configuration pip issue
+- Fix parsing prompt command arguments that include spaces (e.g. `description` tx attributes)
 
 
 [0.9.0] 2019-08-21
