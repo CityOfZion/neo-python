@@ -322,15 +322,21 @@ def verify_params(ptype, param):
     elif ptype == ContractParameterType.ByteArray:
         if isinstance(param, str) and len(param) == 34 and param[0] == 'A':
             return Helper.AddrStrToScriptHash(param).Data, False
-        res = eval(param, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
-        if isinstance(res, bytes):
-            return bytearray(res), False
-        return res, False
+        try:
+            res = eval(param, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
+            if isinstance(res, bytes):
+                return bytearray(res), False
+            return res, False
+        except Exception:
+            raise Exception("Please provide a bytearray or bytes object")
 
     elif ptype == ContractParameterType.Array:
-        res = eval(param)
-        if isinstance(res, list):
-            return res, False
+        try:
+            res = eval(param)
+            if isinstance(res, list):
+                return res, False
+        except Exception:
+            pass
         raise Exception("Please provide a list")
     else:
         raise Exception("Unknown param type %s " % ptype.name)

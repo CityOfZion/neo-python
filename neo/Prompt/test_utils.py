@@ -153,11 +153,13 @@ class TestInputParser(TestCase):
         self.assertFalse(result)
 
     def test_gather_param(self):
+        # test string input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='hello') as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.String)
 
             self.assertEqual(result, 'hello')
 
+        # test integer input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value=1) as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.Integer)
 
@@ -173,6 +175,7 @@ class TestInputParser(TestCase):
 
             self.assertEqual(result, 1)
 
+        # test bytearray input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="bytearray(b'abc')") as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.ByteArray)
 
@@ -183,6 +186,14 @@ class TestInputParser(TestCase):
 
             self.assertEqual(result, bytearray(b'abc'))
 
+        # test string input when expecting bytearray
+        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="abc") as fake_prompt:
+            result, abort = Utils.gather_param(0, ContractParameterType.ByteArray, do_continue=False)
+
+            self.assertEqual(result, None)
+            self.assertEqual(abort, True)
+
+        # test boolean input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="abc") as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.Boolean)
 
@@ -199,6 +210,7 @@ class TestInputParser(TestCase):
 
             self.assertEqual(result, bytearray(b'\xf9\x1dkp\x85\xdb|Z\xaf\t\xf1\x9e\xee\xc1\xca<\r\xb2\xc6\xec'))
 
+        # test array input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='["a","b","c"]') as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.Array)
 

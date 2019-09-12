@@ -186,7 +186,8 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None, min_fee
             try:
                 i_args = []
                 for index, iarg in enumerate(contract.Code.ParameterList):
-                    param, abort = PromptUtils.verify_params(ContractParameterType(iarg), params[index])
+                    ptype = ContractParameterType(iarg)
+                    param, abort = PromptUtils.verify_params(ptype, params[index])
                     if abort:
                         return None, None, None, None, False
                     i_args.append(param)
@@ -194,6 +195,9 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None, min_fee
                 params = i_args
             except IndexError:
                 print(f"Check params. {len(contract.Code.ParameterList)} params specified and only {len(params)} given.")
+                return None, None, None, None, False
+            except Exception as e:
+                print("Could not parse param as %s : %s " % (ptype, e))
                 return None, None, None, None, False
         else:
             params.reverse()
@@ -470,7 +474,8 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
             try:
                 i_args = []
                 for index, iarg in enumerate(contract_state.Code.ParameterList):
-                    param, abort = PromptUtils.verify_params(ContractParameterType(iarg), invoke_args[index])
+                    ptype = ContractParameterType(iarg)
+                    param, abort = PromptUtils.verify_params(ptype, invoke_args[index])
                     if abort:
                         return None, [], 0, None
                     i_args.append(param)
@@ -478,6 +483,9 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                 invoke_args = i_args
             except IndexError:
                 print(f"Check params. {len(contract_state.Code.ParameterList)} params specified and only {len(invoke_args)} given.")
+                return None, [], 0, None
+            except Exception as e:
+                print("Could not parse param as %s : %s " % (ptype, e))
                 return None, [], 0, None
         else:
             invoke_args.reverse()
