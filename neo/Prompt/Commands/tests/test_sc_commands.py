@@ -135,7 +135,25 @@ class CommandSCTestCase(WalletFixtureTestCase):
                     ]  # missing third param
             tx, result, total_ops, engine = CommandSC().execute(args)
             self.assertFalse(tx)
-            self.assertIn("Check params. 3 params specified and only 2 given.", mock_print.getvalue())
+            self.assertIn("Check inputs. 3 params specified and only 2 given.", mock_print.getvalue())
+
+        # test invalid param type
+        PromptData.Wallet = self.GetWallet1(recreate=True)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', 'fe0502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy',
+                    '3']  # "fe" is an invalid param type
+            tx, result, total_ops, engine = CommandSC().execute(args)
+            self.assertFalse(tx)
+            self.assertIn("Check params. 254 is not a valid ContractParameterType", mock_print.getvalue())
+
+        # test unknown param type
+        PromptData.Wallet = self.GetWallet1(recreate=True)
+        with patch('sys.stdout', new=StringIO()) as mock_print:
+            args = ['build_run', 'neo/Prompt/Commands/tests/SampleSC.py', 'True', 'False', 'False', '030502', '02', 'add', 'AG4GfwjnvydAZodm4xEDivguCtjCFzLcJy',
+                    '3']  # "03" is Hash160
+            tx, result, total_ops, engine = CommandSC().execute(args)
+            self.assertFalse(tx)
+            self.assertIn('Could not parse add as Hash160: Unknown param type Hash160', mock_print.getvalue())
 
         # test successful build and run
         PromptData.Wallet = self.GetWallet1(recreate=True)
@@ -393,7 +411,7 @@ class CommandSCTestCase(WalletFixtureTestCase):
             args = ['invoke', token_hash_str, 'name']  # missing second arg
             res = CommandSC().execute(args)
             self.assertFalse(res)
-            self.assertIn("Check params. 2 params specified and only 1 given.", mock_print.getvalue())
+            self.assertIn("Check inputs. 2 params specified and only 1 given.", mock_print.getvalue())
 
         # test with keyboard interrupt
         with patch('sys.stdout', new=StringIO()) as mock_print:

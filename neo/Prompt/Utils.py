@@ -328,8 +328,7 @@ def verify_params(ptype, param):
                 return bytearray(res), False
             return res, False
         except Exception:
-            raise Exception("Please provide a bytearray or bytes object")
-
+            raise Exception(f"{param} is not a valid bytearray or bytes object")
     elif ptype == ContractParameterType.Array:
         try:
             res = eval(param)
@@ -337,7 +336,7 @@ def verify_params(ptype, param):
                 return res, False
         except Exception:
             pass
-        raise Exception("Please provide a list")
+        raise Exception(f"{param} is not a valid list object")
     else:
         raise Exception("Unknown param type %s " % ptype.name)
 
@@ -360,12 +359,10 @@ def gather_param(index, param_type, do_continue=True):
         return verify_params(ptype, result)
 
     except KeyboardInterrupt:  # Control-C pressed: exit
-
         return None, True
 
     except Exception as e:
-
-        print("Could not parse param as %s : %s " % (ptype, e))
+        print(f'Could not parse {result} as {ptype}:', e)
         if do_continue:
             return gather_param(index, param_type, do_continue)
 

@@ -194,10 +194,13 @@ def TestInvokeContract(wallet, args, withdrawal_tx=None, from_addr=None, min_fee
                 i_args.reverse()
                 params = i_args
             except IndexError:
-                print(f"Check params. {len(contract.Code.ParameterList)} params specified and only {len(params)} given.")
+                print(f"Check inputs. {len(contract.Code.ParameterList)} params specified and only {len(params)} given.")
+                return None, None, None, None, False
+            except ValueError as e:
+                print("Check params.", e)
                 return None, None, None, None, False
             except Exception as e:
-                print("Could not parse param as %s : %s " % (ptype, e))
+                print(f'Could not parse {params[index]} as {ptype}:', e)
                 return None, None, None, None, False
         else:
             params.reverse()
@@ -482,10 +485,13 @@ def test_deploy_and_invoke(deploy_script, invoke_args, wallet,
                 i_args.reverse()
                 invoke_args = i_args
             except IndexError:
-                print(f"Check params. {len(contract_state.Code.ParameterList)} params specified and only {len(invoke_args)} given.")
+                print(f"Check inputs. {len(contract_state.Code.ParameterList)} params specified and only {len(invoke_args)} given.")
+                return None, [], 0, None
+            except ValueError as e:
+                print("Check params.", e)
                 return None, [], 0, None
             except Exception as e:
-                print("Could not parse param as %s : %s " % (ptype, e))
+                print(f'Could not parse {invoke_args[index]} as {ptype}:', e)
                 return None, [], 0, None
         else:
             invoke_args.reverse()
