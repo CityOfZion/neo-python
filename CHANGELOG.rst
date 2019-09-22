@@ -10,6 +10,7 @@ All notable changes to this project are documented in this file.
 - Update Python requirements
 - Fix Docker configuration pip issue
 - Fix parsing prompt command arguments that include spaces (e.g. `description` tx attributes)
+- Fix automatic shutdown when initializing np-api-server and setting minpeers/maxpeers and opening a wallet
 
 
 [0.9.0] 2019-08-21
