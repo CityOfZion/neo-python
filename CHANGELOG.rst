@@ -3,13 +3,18 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
-[0.9.1-dev] In progress
------------------------
+[0.9.2] In progress
+-------------------
+- Fix param parsing input from command line
+
+
+[0.9.1] 2019-09-16 
+------------------
 - Reformat wallet verbose output to include big-endian scripthash
 - Fix network syncing against neo-cli ``2.10.3`` clients
 - Update Python requirements
 - Fix Docker configuration pip issue
-- Fix param parsing input from command line
+- Fix parsing prompt command arguments that include spaces (e.g. `description` tx attributes)
 
 
 [0.9.0] 2019-08-21
