@@ -180,21 +180,21 @@ async def setup_and_start(loop):
     if minpeers and maxpeers:
         if minpeers > maxpeers:
             print("minpeers setting cannot be bigger than maxpeers setting")
-            return
+            raise SystemExit
         if not set_min_peers(minpeers) or not set_max_peers(maxpeers):
-            return
+            raise SystemExit
     elif minpeers:
         if not set_min_peers(minpeers):
-            return
+            raise SystemExit
         if minpeers > settings.CONNECTED_PEER_MAX:
             if not set_max_peers(minpeers):
-                return
+                raise SystemExit
     elif maxpeers:
         if not set_max_peers(maxpeers):
-            return
+            raise SystemExit
         if maxpeers < settings.CONNECTED_PEER_MIN:
             if not set_min_peers(maxpeers):
-                return
+                raise SystemExit
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -223,7 +223,7 @@ async def setup_and_start(loop):
     if args.wallet:
         if not os.path.exists(args.wallet):
             print("Wallet file not found")
-            return
+            raise SystemExit
 
         passwd = os.environ.get('NEO_PYTHON_JSONRPC_WALLET_PASSWORD', None)
         if not passwd:
@@ -231,7 +231,7 @@ async def setup_and_start(loop):
                 passwd = prompt("[password]> ", is_password=True)
             except KeyboardInterrupt:
                 print("Wallet opening cancelled")
-                return
+                raise SystemExit
 
         password_key = to_aes_key(passwd)
         try:
@@ -240,7 +240,7 @@ async def setup_and_start(loop):
 
         except Exception as e:
             print(f"Could not open wallet {e}")
-            return
+            raise SystemExit
     else:
         wallet = None
 
