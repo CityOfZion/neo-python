@@ -3,6 +3,11 @@ Changelog
 
 All notable changes to this project are documented in this file.
 
+[0.9.2] In progress
+-------------------
+- Fix automatic shutdown when initializing np-api-server and setting minpeers/maxpeers or opening a wallet
+
+
 [0.9.1] 2019-09-16 
 ------------------
 - Reformat wallet verbose output to include big-endian scripthash
@@ -10,7 +15,6 @@ All notable changes to this project are documented in this file.
 - Update Python requirements
 - Fix Docker configuration pip issue
 - Fix parsing prompt command arguments that include spaces (e.g. `description` tx attributes)
-- Fix automatic shutdown when initializing np-api-server and setting minpeers/maxpeers and opening a wallet
 
 
 [0.9.0] 2019-08-21
