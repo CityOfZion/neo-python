@@ -327,7 +327,9 @@ def main():
 
     wallet = main_task.result()
     if wallet:
+        path = wallet._path
         wallet.Close()
+        logger.info(f"Closed wallet {path}")
 
 
 if __name__ == "__main__":
