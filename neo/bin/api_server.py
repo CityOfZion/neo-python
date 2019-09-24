@@ -269,7 +269,7 @@ async def setup_and_start(loop):
             sys.exit()
         api_server_rpc = rpc_class(wallet=wallet)
 
-        runner = web.AppRunner(api_server_rpc.app)
+        runner = web.AppRunner(api_server_rpc.app, handle_signals=True)
         await runner.setup()
         site = web.TCPSite(runner, args.host, args.port_rpc)
         await site.start()
@@ -282,7 +282,7 @@ async def setup_and_start(loop):
             logger.error(err)
             sys.exit()
         api_server_rest = rest_api()
-        runner = web.AppRunner(api_server_rest.app)
+        runner = web.AppRunner(api_server_rpc.app, handle_signals=True)
         await runner.setup()
         site = web.TCPSite(runner, args.host, args.port_rpc)
         await site.start()
