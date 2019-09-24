@@ -44,7 +44,7 @@ from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Network.p2pservice import NetworkService
-from neo.Settings import settings
+from neo.Settings import settings, PrivnetConnectionError
 from neo.Utils.plugin import load_class_from_path
 from neo.Wallets.utils import to_aes_key
 from contextlib import suppress
@@ -152,7 +152,11 @@ async def setup_and_start(loop):
     elif args.testnet:
         settings.setup_testnet()
     elif args.privnet:
-        settings.setup_privnet()
+        try:
+            settings.setup_privnet()
+        except PrivnetConnectionError as e:
+            print(e)
+            raise SystemExit
     elif args.coznet:
         settings.setup_coznet()
 
