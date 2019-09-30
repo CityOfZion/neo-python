@@ -44,7 +44,7 @@ from neo.Implementations.Notifications.NotificationDB import NotificationDB
 from neo.Wallets.utils import to_aes_key
 from neo.Implementations.Wallets.peewee.UserWallet import UserWallet
 from neo.Network.p2pservice import NetworkService
-from neo.Settings import settings
+from neo.Settings import settings, PrivnetConnectionError
 from neo.Utils.plugin import load_class_from_path
 from neo.Wallets.utils import to_aes_key
 from contextlib import suppress
@@ -152,7 +152,11 @@ async def setup_and_start(loop):
     elif args.testnet:
         settings.setup_testnet()
     elif args.privnet:
-        settings.setup_privnet()
+        try:
+            settings.setup_privnet()
+        except PrivnetConnectionError as e:
+            print(e)
+            raise SystemExit
     elif args.coznet:
         settings.setup_coznet()
 
@@ -180,21 +184,21 @@ async def setup_and_start(loop):
     if minpeers and maxpeers:
         if minpeers > maxpeers:
             print("minpeers setting cannot be bigger than maxpeers setting")
-            return
+            raise SystemExit
         if not set_min_peers(minpeers) or not set_max_peers(maxpeers):
-            return
+            raise SystemExit
     elif minpeers:
         if not set_min_peers(minpeers):
-            return
+            raise SystemExit
         if minpeers > settings.CONNECTED_PEER_MAX:
             if not set_max_peers(minpeers):
-                return
+                raise SystemExit
     elif maxpeers:
         if not set_max_peers(maxpeers):
-            return
+            raise SystemExit
         if maxpeers < settings.CONNECTED_PEER_MIN:
             if not set_min_peers(maxpeers):
-                return
+                raise SystemExit
 
     if args.syslog or args.syslog_local is not None:
         # Setup the syslog facility
@@ -223,7 +227,7 @@ async def setup_and_start(loop):
     if args.wallet:
         if not os.path.exists(args.wallet):
             print("Wallet file not found")
-            return
+            raise SystemExit
 
         passwd = os.environ.get('NEO_PYTHON_JSONRPC_WALLET_PASSWORD', None)
         if not passwd:
@@ -231,7 +235,7 @@ async def setup_and_start(loop):
                 passwd = prompt("[password]> ", is_password=True)
             except KeyboardInterrupt:
                 print("Wallet opening cancelled")
-                return
+                raise SystemExit
 
         password_key = to_aes_key(passwd)
         try:
@@ -240,7 +244,7 @@ async def setup_and_start(loop):
 
         except Exception as e:
             print(f"Could not open wallet {e}")
-            return
+            raise SystemExit
     else:
         wallet = None
 
@@ -269,7 +273,7 @@ async def setup_and_start(loop):
             sys.exit()
         api_server_rpc = rpc_class(wallet=wallet)
 
-        runner = web.AppRunner(api_server_rpc.app)
+        runner = web.AppRunner(api_server_rpc.app, handle_signals=True)
         await runner.setup()
         site = web.TCPSite(runner, args.host, args.port_rpc)
         await site.start()
@@ -282,7 +286,7 @@ async def setup_and_start(loop):
             logger.error(err)
             sys.exit()
         api_server_rest = rest_api()
-        runner = web.AppRunner(api_server_rest.app)
+        runner = web.AppRunner(api_server_rpc.app, handle_signals=True)
         await runner.setup()
         site = web.TCPSite(runner, args.host, args.port_rpc)
         await site.start()
@@ -327,7 +331,9 @@ def main():
 
     wallet = main_task.result()
     if wallet:
+        path = wallet._path
         wallet.Close()
+        logger.info(f"Closed wallet {path}")
 
 
 if __name__ == "__main__":
