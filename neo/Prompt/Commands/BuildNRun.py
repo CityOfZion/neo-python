@@ -90,9 +90,10 @@ def DoRun(contract_script, arguments, wallet, path, verbose=True,
     except Exception:
         raise TypeError
 
-    tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr,
-                                                           min_fee, invocation_test_mode, debug_map=debug_map,
-                                                           invoke_attrs=invoke_attrs, owners=owners, enable_debugger=enable_debugger)
+    tx, result, total_ops, engine = test_deploy_and_invoke(script, i_args, wallet, from_addr, min_fee,
+                                                           invocation_test_mode, debug_map=debug_map,
+                                                           invoke_attrs=invoke_attrs, owners=owners,
+                                                           enable_debugger=enable_debugger, user_entry=True)
     i_args.reverse()
 
     return_type_results = []

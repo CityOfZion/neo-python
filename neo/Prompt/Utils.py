@@ -307,6 +307,40 @@ def get_input_prompt(message):
     return prompt(message)
 
 
+def verify_params(ptype, param):
+    if ptype == ContractParameterType.String:
+        return str(param), False
+    elif ptype == ContractParameterType.Integer:
+        return int(param), False
+    elif ptype == ContractParameterType.Boolean:
+        return bool(param), False
+    elif ptype == ContractParameterType.PublicKey:
+        try:
+            return ECDSA.decode_secp256r1(param).G, False
+        except ValueError:
+            return None, True
+    elif ptype == ContractParameterType.ByteArray:
+        if isinstance(param, str) and len(param) == 34 and param[0] == 'A':
+            return Helper.AddrStrToScriptHash(param).Data, False
+        try:
+            res = eval(param, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
+            if isinstance(res, bytes):
+                return bytearray(res), False
+            return res, False
+        except Exception:
+            raise Exception(f"{param} is not a valid bytearray or bytes object")
+    elif ptype == ContractParameterType.Array:
+        try:
+            res = eval(param)
+            if isinstance(res, list):
+                return res, False
+        except Exception:
+            pass
+        raise Exception(f"{param} is not a valid list object")
+    else:
+        raise Exception("Unknown param type %s " % ptype.name)
+
+
 def gather_param(index, param_type, do_continue=True):
     ptype = ContractParameterType(param_type)
     prompt_message = '[Param %s] %s input: ' % (index, ptype.name)
@@ -322,41 +356,13 @@ def gather_param(index, param_type, do_continue=True):
         return None, True
 
     try:
-
-        if ptype == ContractParameterType.String:
-            return str(result), False
-        elif ptype == ContractParameterType.Integer:
-            return int(result), False
-        elif ptype == ContractParameterType.Boolean:
-            return bool(result), False
-        elif ptype == ContractParameterType.PublicKey:
-            try:
-                return ECDSA.decode_secp256r1(result).G, False
-            except ValueError:
-                return None, True
-        elif ptype == ContractParameterType.ByteArray:
-            if isinstance(result, str) and len(result) == 34 and result[0] == 'A':
-                return Helper.AddrStrToScriptHash(result).Data, False
-            res = eval(result, {"__builtins__": {'bytearray': bytearray, 'bytes': bytes}}, {})
-            if isinstance(res, bytes):
-                return bytearray(res), False
-            return res, False
-
-        elif ptype == ContractParameterType.Array:
-            res = eval(result)
-            if isinstance(res, list):
-                return res, False
-            raise Exception("Please provide a list")
-        else:
-            raise Exception("Unknown param type %s " % ptype.name)
+        return verify_params(ptype, result)
 
     except KeyboardInterrupt:  # Control-C pressed: exit
-
         return None, True
 
     except Exception as e:
-
-        print("Could not parse param as %s : %s " % (ptype, e))
+        print(f'Could not parse {result} as {ptype}:', e)
         if do_continue:
             return gather_param(index, param_type, do_continue)
 

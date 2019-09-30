@@ -153,11 +153,13 @@ class TestInputParser(TestCase):
         self.assertFalse(result)
 
     def test_gather_param(self):
+        # test string input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='hello') as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.String)
 
             self.assertEqual(result, 'hello')
 
+        # test integer input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value=1) as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.Integer)
 
@@ -173,6 +175,7 @@ class TestInputParser(TestCase):
 
             self.assertEqual(result, 1)
 
+        # test bytearray input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="bytearray(b'abc')") as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.ByteArray)
 
@@ -183,6 +186,16 @@ class TestInputParser(TestCase):
 
             self.assertEqual(result, bytearray(b'abc'))
 
+        # test string input when expecting bytearray
+        with mock.patch('sys.stdout', new=StringIO()) as mock_print:
+            with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="abc") as fake_prompt:
+                result, abort = Utils.gather_param(0, ContractParameterType.ByteArray, do_continue=False)
+
+                self.assertEqual(result, None)
+                self.assertEqual(abort, True)
+                self.assertIn('Could not parse abc as ByteArray: abc is not a valid bytearray or bytes object', mock_print.getvalue())
+
+        # test boolean input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="abc") as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.Boolean)
 
@@ -199,6 +212,7 @@ class TestInputParser(TestCase):
 
             self.assertEqual(result, bytearray(b'\xf9\x1dkp\x85\xdb|Z\xaf\t\xf1\x9e\xee\xc1\xca<\r\xb2\xc6\xec'))
 
+        # test array input
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='["a","b","c"]') as fake_prompt:
             result, abort = Utils.gather_param(0, ContractParameterType.Array)
 
@@ -210,19 +224,22 @@ class TestInputParser(TestCase):
             self.assertEqual(result, ['a', 'b', 'c', [1, 3, 4], 'e'])
 
         # test ContractParameterType.Array without a closed list
-        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='["a","b","c", [1, 3, 4], "e"') as fake_prompt:
-            result, abort = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
+        with mock.patch('sys.stdout', new=StringIO()) as mock_print:
+            with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value='["a","b","c", [1, 3, 4], "e"') as fake_prompt:
+                result, abort = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
 
-            self.assertEqual(result, None)
-            self.assertEqual(abort, True)
+                self.assertEqual(result, None)
+                self.assertEqual(abort, True)
+                self.assertIn('Could not parse ["a","b","c", [1, 3, 4], "e" as Array: ["a","b","c", [1, 3, 4], "e" is not a valid list object', mock_print.getvalue())
 
         # test ContractParameterType.Array with no list
-        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="b'abc'") as fake_prompt:
-            result, abort = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
+        with mock.patch('sys.stdout', new=StringIO()) as mock_print:
+            with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="b'abc'") as fake_prompt:
+                result, abort = Utils.gather_param(0, ContractParameterType.Array, do_continue=False)
 
-            self.assertRaises(Exception, "Please provide a list")
-            self.assertEqual(result, None)
-            self.assertEqual(abort, True)
+                self.assertEqual(result, None)
+                self.assertEqual(abort, True)
+                self.assertIn("Could not parse b'abc' as Array: b'abc' is not a valid list object", mock_print.getvalue())
 
         # test ContractParameterType.PublicKey
         with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="03cbb45da6072c14761c9da545749d9cfd863f860c351066d16df480602a2024c6") as fake_prompt:
@@ -255,12 +272,13 @@ class TestInputParser(TestCase):
             self.assertTrue(abort)
 
         # test unknown ContractParameterType
-        with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="9698b1cac6ce9cbe8517e490778525b929e01903") as fake_prompt:
-            result, abort = Utils.gather_param(0, ContractParameterType.Hash160, do_continue=False)
+        with mock.patch('sys.stdout', new=StringIO()) as mock_print:
+            with mock.patch('neo.Prompt.Utils.get_input_prompt', return_value="9698b1cac6ce9cbe8517e490778525b929e01903") as fake_prompt:
+                result, abort = Utils.gather_param(0, ContractParameterType.Hash160, do_continue=False)
 
-            self.assertRaises(Exception, "Unknown param type Hash160")
-            self.assertEqual(result, None)
-            self.assertEqual(abort, True)
+                self.assertEqual(result, None)
+                self.assertEqual(abort, True)
+                self.assertIn("Could not parse 9698b1cac6ce9cbe8517e490778525b929e01903 as Hash160: Unknown param type Hash160", mock_print.getvalue())
 
         # test Exception
         with mock.patch('sys.stdout', new=StringIO()) as mock_print:

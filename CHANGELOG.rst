@@ -6,6 +6,7 @@ All notable changes to this project are documented in this file.
 [0.9.2] In progress
 -------------------
 - Fix shutdown operations when initializing np-api-server and setting minpeers/maxpeers, opening a wallet, or changing databases
+- Fix param parsing input from command line
 
 
 [0.9.1] 2019-09-16 
