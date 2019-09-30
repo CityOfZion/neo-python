@@ -14,5 +14,5 @@ class PromptData:
         Blockchain.Default().PersistCompleted.on_change -= PromptData.Wallet.ProcessNewBlock
         PromptData.Wallet.Close()
         PromptData.Wallet = None
-        print("Closed wallet %s" % path)
+        print(f"Closed wallet {path}")
         return True
