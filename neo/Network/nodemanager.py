@@ -2,6 +2,7 @@ import asyncio
 import socket
 import traceback
 import errno
+import random
 from contextlib import suppress
 from datetime import datetime
 from functools import partial
@@ -140,6 +141,7 @@ class NodeManager(Singleton):
                             # we have no other option then to retry any address we know
                             logger.debug("Recycling old addresses")
                             self.known_addresses = self.bad_addresses
+                            random.shuffle(self.known_addresses)
                             self.bad_addresses = []
                             self.MAX_NODE_POOL_ERROR_COUNT = 0
 
