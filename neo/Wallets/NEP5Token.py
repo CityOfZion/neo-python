@@ -7,6 +7,7 @@ from neo.Core.Fixed8 import Fixed8
 from neo.Prompt.Commands.Invoke import TestInvokeContract, test_invoke
 from neo.Prompt import Utils as PromptUtils
 from neo.Core.UInt160 import UInt160
+from neo.Core.TX import Transaction
 from neo.VM.ScriptBuilder import ScriptBuilder
 from neo.SmartContract.ApplicationEngine import ApplicationEngine
 from neo.Core.Mixins import SerializableMixin
@@ -97,8 +98,9 @@ class NEP5Token(VerificationCode, SerializableMixin):
 
         snapshot = GetBlockchain().Default()._db.createSnapshot().Clone()
         engine = None
+        fake_tx = Transaction.Transaction()
         try:
-            engine = ApplicationEngine.Run(snapshot, sb.ToArray(), exit_on_error=True, gas=Fixed8.FromDecimal(10.0), test_mode=False)
+            engine = ApplicationEngine.Run(snapshot, sb.ToArray(), container=fake_tx, exit_on_error=True, gas=Fixed8.FromDecimal(10.0), test_mode=False)
         except Exception as e:
             traceback.print_exc()
             pass
