@@ -8,6 +8,7 @@ All notable changes to this project are documented in this file.
 - Fix shutdown operations when initializing np-api-server and setting minpeers/maxpeers, opening a wallet, or changing databases
 - Minor improvement to network recovery logic when running out of good node addresses
 - Fix NEP-5 contract detection causing an EventHub exception due to wrong ApplicationEngine initialization
+- Hide contract script in `search contract` output for easier reading of search results
 
 [0.9.1] 2019-09-16 
 ------------------

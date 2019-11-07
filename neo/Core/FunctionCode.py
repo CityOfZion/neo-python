@@ -108,4 +108,3 @@ class FunctionCode(SerializableMixin):
         return {
             'hash': self.ScriptHash().To0xString(),
         }
-
