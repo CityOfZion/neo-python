@@ -89,7 +89,7 @@ class FunctionCode(SerializableMixin):
         writer.WriteVarBytes(self.ParameterList)
         writer.WriteByte(self.ReturnType)
 
-    def ToJson(self):
+    def ToJson(self, verbose=True):
         """
         Convert object members to a dictionary that can be parsed as JSON.
 
@@ -98,9 +98,13 @@ class FunctionCode(SerializableMixin):
         """
         parameters = self.ParameterList.hex()
         paramlist = [ToName(ContractParameterType.FromString(parameters[i:i + 2]).value) for i in range(0, len(parameters), 2)]
+        if verbose:
+            return {
+                'hash': self.ScriptHash().To0xString(),
+                'script': self.Script.hex(),
+                'parameters': paramlist,
+                'returntype': ToName(self.ReturnType) if type(self.ReturnType) is int else ToName(int(self.ReturnType))
+            }
         return {
             'hash': self.ScriptHash().To0xString(),
-            'script': self.Script.hex(),
-            'parameters': paramlist,
-            'returntype': ToName(self.ReturnType) if type(self.ReturnType) is int else ToName(int(self.ReturnType))
         }

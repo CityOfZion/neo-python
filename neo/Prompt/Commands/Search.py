@@ -64,7 +64,7 @@ class CommandSearchContract(CommandBase):
             contracts = Blockchain.Default().SearchContracts(query=item)
             print("Found %s results for %s" % (len(contracts), item))
             for contract in contracts:
-                print(json.dumps(contract.ToJson(), indent=4))
+                print(json.dumps(contract.ToJson(verbose=False), indent=4))
             return contracts
         else:
             print("run `%s %s help` to see supported queries" % (CommandSearch().command_desc().command, self.command_desc().command))

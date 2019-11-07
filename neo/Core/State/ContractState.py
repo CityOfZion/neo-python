@@ -169,7 +169,7 @@ class ContractState(StateBase):
             self._is_nep5 = True
         return self._is_nep5
 
-    def ToJson(self):
+    def ToJson(self, verbose=True):
         """
         Convert object members to a dictionary that can be parsed as JSON.
 
@@ -185,7 +185,7 @@ class ContractState(StateBase):
 
         jsn = {'version': self.StateVersion}
 
-        jsn_code = self.Code.ToJson()
+        jsn_code = self.Code.ToJson(verbose=verbose)
 
         jsn_contract = {
             'name': name,
@@ -199,7 +199,6 @@ class ContractState(StateBase):
                 'payable': self.Payable
             }
         }
-
         jsn.update(jsn_code)
         jsn.update(jsn_contract)
 
