@@ -58,7 +58,7 @@ On MainNet there are actually entries, each of which has this format: `0xde3bc1d
     
 ### with invalid address
     curl -X POST http://seed2.neo.org:20332 -H 'Cication/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "validateaddress", "params": ["152f1muMCNa7goXYhYAQC61hxEgGacmncB"] }'
-    {"jsonrpc":"2.0","id":5,"result":{"address":"152f1muMCNa7goXYhYAQC61hxEgGacmncB","isvalid":false}}
+    {"jsonrpc":"2.0","id":5,"result":{"address":"152f1muMCNa7goXYhYAQC61hxEgGacmncB","valid":true}}
     
 ### with completely invalid argument
     curl -X POST http://seed2.neo.org:20332 -H 'Content-Type: application/json' -d '{ "jsonrpc": "2.0", "id": 5, "method": "validateaddress", "params": [] }'
