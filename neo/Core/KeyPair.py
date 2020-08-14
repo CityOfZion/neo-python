@@ -96,14 +96,14 @@ class KeyPair(object):
                 if the input `wif` has an invalid format
                 if the input `wif` has an invalid checksum
         """
-        if wif is None or len(wif) is not 52:
+        if wif is None or len(wif) != 52:
             raise ValueError('Please provide a wif with a length of 52 bytes (LEN: {0:d})'.format(len(wif)))
 
         data = base58.b58decode(wif)
 
         length = len(data)
 
-        if length is not 38 or data[0] is not 0x80 or data[33] is not 0x01:
+        if length != 38 or data[0] != 0x80 or data[33] != 0x01:
             raise ValueError("Invalid format!")
 
         checksum = Crypto.Hash256(data[0:34])[0:4]
