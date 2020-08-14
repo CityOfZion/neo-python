@@ -21,7 +21,10 @@ with open('README.rst') as readme_file:
 
 # get the requirements from requirements.txt
 install_reqs = parse_requirements('requirements.txt', session=PipSession())
-reqs = [str(ir.req) for ir in install_reqs]
+if pip_version >= parse_version("20"):
+    reqs = [str(ir.requirement) for ir in install_reqs]
+else:
+    reqs = [str(ir.req) for ir in install_reqs]
 
 setup(
     name='neo-python',
