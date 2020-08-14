@@ -2,6 +2,7 @@
 """The setup script."""
 
 from setuptools import setup, find_packages
+from pkg_resources import parse_version
 
 try:
     from pip._internal.req import parse_requirements
