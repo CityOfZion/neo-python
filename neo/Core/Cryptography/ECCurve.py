@@ -707,7 +707,7 @@ class EllipticCurve:
             ysquare_root = None
 
         bit0 = 0
-        if ysquare_root % 2 is not 0:
+        if ysquare_root % 2 != 0:
             bit0 = 1
 
         if bit0 != flag:
