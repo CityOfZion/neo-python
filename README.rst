@@ -1,6 +1,12 @@
 .. image:: https://raw.githubusercontent.com/CityOfZion/visual-identity/develop/_CoZ%20Branding/_Logo/_Logo%20icon/_PNG%20200x178px/CoZ_Icon_DARKBLUE_200x178px.png
     :alt: CoZ logo
 
+
+Deprecated
+==========
+Neo-python was for version 2.x of the NEO Network. `neo-mamba <https://github.com/CityOfZion/neo-mamba>`_ is its successor for NEO 3.x and beyond.
+
+
 neo-python
 ----------
 
