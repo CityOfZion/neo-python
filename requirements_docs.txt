@@ -8,7 +8,7 @@ certifi==2018.11.29
 chardet==3.0.4
 coz-bytecode==0.5.1
 docutils==0.14
-ecdsa==0.13
+ecdsa==0.13.3
 idna==2.8
 imagesize==1.1.0
 Jinja2==2.10
